@@ -1,0 +1,22 @@
+name: dt_env
+channels:
+  - pytorch
+dependencies:
+  - python=3.8.10
+  - pip:
+      - gym
+      - numpy>=1.20.3
+      - wandb
+      - torch>=1.8.1
+      - transformers>=4.5.1
+      - git+https://github.com/Farama-Foundation/d4rl@master#egg=d4rl
+      - stable-baselines3>=1.1.0
+      - shimmy>=2.0
+      - minari[all]
+      - transformers[torch]
+      - datasets
+      - minari[all]
+      - Cython<3
+      - imageio-ffmpeg
+      - xvfbwrapper
+      - huggingface_hub

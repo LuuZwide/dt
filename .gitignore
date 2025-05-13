@@ -1,0 +1,5 @@
+Datasets/
+envs/
+mujoco/
+outputs/
+wandb/

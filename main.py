@@ -4,7 +4,7 @@ import wandb
 import numpy as np
 import wandb
 import torch
-from datasets import load_dataset,load_from_disk
+from datasets import load_dataset,load_from_disk, concatenate_datasets
 from transformers import Trainer, TrainingArguments
 import DecisionTransformer 
 import utils
@@ -27,9 +27,23 @@ def download_datasets():
 
             #download new datasets
             dataset = load_dataset("edbeeching/decision_transformer_gym_replay", name)
+
             dataset.save_to_disk(f"Datasets/{name}")
 
 #download_datasets()
+
+#Concatenate datasets
+def concatenate_datasets_():
+    concatenated_dataset = None
+    medium_dataset = load_from_disk("Datasets/halfcheetah-medium-v2")
+    expert_dataset = load_from_disk("Datasets/halfcheetah-expert-v2")
+    
+    concatenated_dataset = concatenate_datasets([medium_dataset["train"], expert_dataset["train"]])
+
+    concatenated_dataset.save_to_disk("Datasets/concatenated_halfcheetah")
+    return concatenated_dataset
+    
+concatenate_datasets_()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--name", type=str, default="DT_Haftcheeta_M_A")

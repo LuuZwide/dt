@@ -4,7 +4,7 @@ import wandb
 import numpy as np
 import wandb
 import torch
-from datasets import load_dataset,load_from_disk, concatenate_datasets
+from datasets import load_dataset,load_from_disk, concatenate_datasets, DatasetDict
 from transformers import Trainer, TrainingArguments
 import DecisionTransformer 
 import utils
@@ -16,43 +16,48 @@ import gym
 #import mujoco_py
 #import d4rl
 
+## TODO : Check for validation dataset and add it to the training process
 def download_datasets():
-    for env_name in ["halfcheetah"]:
+    for env_name in ["halfcheetah", "hopper","walker2d"]:
         for dataset_type in ["medium", "expert"]:
             name = f"{env_name}-{dataset_type}-v2"
             
             #delete old datasets
-            if os.path.exists(f"Datasets/{name}"):
-                os.system(f"rm -rf Datasets/{name}")
+            if not os.path.exists(f"Datasets/{name}"):
+                #os.system(f"rm -rf Datasets/{name}")
+                #download new datasets
+                dataset = load_dataset("edbeeching/decision_transformer_gym_replay", name)
+                dataset.save_to_disk(f"Datasets/{name}")
 
-            #download new datasets
-            dataset = load_dataset("edbeeching/decision_transformer_gym_replay", name)
-
-            dataset.save_to_disk(f"Datasets/{name}")
-
-#download_datasets()
+download_datasets()
 
 #Concatenate datasets
 def concatenate_datasets_():
-    concatenated_dataset = None
-    medium_dataset = load_from_disk("Datasets/halfcheetah-medium-v2")
-    expert_dataset = load_from_disk("Datasets/halfcheetah-expert-v2")
-    
-    concatenated_dataset = concatenate_datasets([medium_dataset["train"], expert_dataset["train"]])
 
-    concatenated_dataset.save_to_disk("Datasets/concatenated_halfcheetah")
-    return concatenated_dataset
-    
+    for env in ["halfcheetah", "hopper","walker2d"]:
+        if not os.path.exists(f"Datasets/mixed_{env}"):
+            concatenated_dataset = None
+            medium_dataset = load_from_disk(f"Datasets/{env}-medium-v2")
+            expert_dataset = load_from_disk(f"Datasets/{env}-expert-v2")
+            concatenated_dataset = DatasetDict({'train': concatenate_datasets([medium_dataset['train'], expert_dataset['train']])}) 
+            print(f'concatenated_dataset: {concatenated_dataset.shape}')
+            concatenated_dataset.save_to_disk(f"Datasets/mixed_{env}")
+
+    return 
+
 concatenate_datasets_()
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--name", type=str, default="DT_Haftcheeta_M_A")
+parser.add_argument("--name", type=str, default="DT_Haftcheetah_M_A")
 parser.add_argument("--env", type=str, default="halfcheetah-medium-v2")
 parser.add_argument("--outputs", nargs='+', type=str, required=True)
 args = parser.parse_args()
 
 directoy = "Datasets/" + args.env
 train_dataset = load_from_disk(directoy)
+
+if not args.env.startswith("mixed_"):
+    train_dataset = train_dataset['train']
 
 os.environ["WANDB_MODE"] = "offline"
 
@@ -67,7 +72,7 @@ wandb.init(
     }
 )
 
-collator = DecisionTransformerGymDataCollator(train_dataset["train"])
+collator = DecisionTransformerGymDataCollator(train_dataset)
 
 save_directory = "./outputs/" + args.name
 
@@ -83,6 +88,7 @@ checkpoint_directory = save_directory + "_checkpoints"
 if not os.path.exists(checkpoint_directory):
     os.makedirs(checkpoint_directory)
 
+## TODO : Add early stopping 
 training_args = TrainingArguments(output_dir=checkpoint_directory,
     run_name= args.name,
     remove_unused_columns=False,
@@ -103,7 +109,7 @@ training_args = TrainingArguments(output_dir=checkpoint_directory,
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=train_dataset["train"],
+    train_dataset=train_dataset,
     data_collator=collator, 
 )
 

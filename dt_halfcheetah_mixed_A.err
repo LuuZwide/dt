@@ -1,0 +1,30 @@
+[33mWARNING:[0m underlay of /etc/localtime required more than 50 (95) bind mounts
+wandb: Tracking run with wandb version 0.19.10
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+Detected kernel version 3.10.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+max_steps is given, it will override any value given in num_train_epochs
+  0%|          | 0/5 [00:00<?, ?it/s] 20%|██        | 1/5 [00:15<01:00, 15.12s/it] 40%|████      | 2/5 [00:18<00:24,  8.14s/it] 60%|██████    | 3/5 [00:21<00:11,  5.74s/it] 80%|████████  | 4/5 [00:23<00:04,  4.48s/it]100%|██████████| 5/5 [00:26<00:00,  3.76s/it]                                             100%|██████████| 5/5 [00:26<00:00,  3.76s/it]100%|██████████| 5/5 [00:26<00:00,  5.27s/it]
+wandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:            A_loss ▆█▅▁▁
+wandb:            R_loss █▄▄▁▆
+wandb:        total_loss █▄▄▁▆
+wandb:       train/epoch ▁
+wandb: train/global_step ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█
+wandb: 
+wandb: Run summary:
+wandb:                   A_loss 0.63202
+wandb:                   R_loss 44.98438
+wandb:               total_flos 392907264000.0
+wandb:               total_loss 45.6164
+wandb:              train/epoch 0.3125
+wandb:        train/global_step 5
+wandb:               train_loss 42.74893
+wandb:            train_runtime 26.3528
+wandb: train_samples_per_second 12.143
+wandb:   train_steps_per_second 0.19
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /opt/dt/wandb/offline-run-20250524_201444-jd8a9u6e
+wandb: Find logs at: ./wandb/offline-run-20250524_201444-jd8a9u6e/logs

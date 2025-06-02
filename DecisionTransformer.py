@@ -142,7 +142,7 @@ class TrainableDT(DecisionTransformerModel):
 class ParamTrainableDT(DecisionTransformerModel):
     def __init__(self, config, loss_list): #This is a list containing (A,R,S)
         super().__init__(config)
-        self.loss = loss_list
+        self.loss_list = loss_list
 
     def forward(self, **kwargs):
 
@@ -179,17 +179,16 @@ class ParamTrainableDT(DecisionTransformerModel):
 
         loss = 0
 
-        log_data = {}
-        for l in self.loss:
-            loss += total_loss[l]
-            wandb.log({l+"_loss":total_loss[l].item()})
+        log_data = {l+"_LOSS" : total_loss[l] for l in self.loss_list}
+        loss = sum([total_loss[l] for l in self.loss_list])
+        wandb.log(log_data)
         
         # Log the total loss after the loop
-        wandb.log({"total_loss": loss})
+        wandb.log({"total_loss": loss.item()})
         return {"loss": loss,
                 "A_loss": total_loss['A'],
-                "R_loss" : total_loss['A'],
-                "S_loss" : total_loss['A'],
+                "R_loss" : total_loss['R'],
+                "S_loss" : total_loss['S'],
                 "loss_details" : total_loss,
         }
         

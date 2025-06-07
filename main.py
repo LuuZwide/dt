@@ -4,7 +4,7 @@ import wandb
 import numpy as np
 import wandb
 import torch
-from datasets import load_dataset,load_from_disk, concatenate_datasets, DatasetDict
+from datasets import load_dataset,load_from_disk, concatenate_datasets, DatasetDict, Dataset
 from transformers import Trainer, TrainingArguments
 import DecisionTransformer 
 import utils
@@ -13,51 +13,119 @@ from DecisionTransformer import DecisionTransformerGymDataCollator, TrainableDT,
 from transformers import DecisionTransformerConfig, DecisionTransformerModel, Trainer, TrainingArguments
 import argparse
 import gym
+import datasets
+import h5py
 #import mujoco_py
 #import d4rl
 
 ## TODO : Check for validation dataset and add it to the training process
 def download_datasets():
-    for env_name in ["halfcheetah", "hopper","walker2d"]:
-        for dataset_type in ["medium", "expert"]:
+    for env_name in ["halfcheetah", "hopper","ant"]:
+        for dataset_type in ["expert",]:
             name = f"{env_name}-{dataset_type}-v2"
             
             #delete old datasets
             if not os.path.exists(f"Datasets/{name}"):
                 #os.system(f"rm -rf Datasets/{name}")
                 #download new datasets
-                dataset = load_dataset("edbeeching/decision_transformer_gym_replay", name)
+                dataset = load_dataset("edbeeching/decision_transformer_gym_replay",name)
                 dataset.save_to_disk(f"Datasets/{name}")
 
-download_datasets()
+#download_datasets()
 
-#Concatenate datasets
-def concatenate_datasets_():
+file = "Datasets/halfcheetah_medium-v2.hdf5"
+file = h5py.File(file, 'r')
 
-    for env in ["halfcheetah", "hopper","walker2d"]:
-        if not os.path.exists(f"Datasets/mixed_{env}"):
-            concatenated_dataset = None
-            medium_dataset = load_from_disk(f"Datasets/{env}-medium-v2")
-            expert_dataset = load_from_disk(f"Datasets/{env}-expert-v2")
-            concatenated_dataset = DatasetDict({'train': concatenate_datasets([medium_dataset['train'], expert_dataset['train']])}) 
-            print(f'concatenated_dataset: {concatenated_dataset.shape}')
-            concatenated_dataset.save_to_disk(f"Datasets/mixed_{env}")
+#convert to numpy array 
+actions = file['actions'][:]
+observations = file['observations'][:]
+rewards = file['rewards'][:]
+terminals = file['terminals'][:]
+#create hugging face dataset
+train_dataset = Dataset.from_dict({
+    'actions': actions,
+    'observations': observations,
+    'rewards': rewards,
+    'terminals': terminals,
+})
 
-    return 
+def convert_to_trajactories(dataset):
+    actions = dataset['actions']
+    observations = dataset['observations']
+    rewards = dataset['rewards']
+    terminals = dataset['terminals']
+    
+    actions_set = []
+    observations_set = []
+    rewards_set = []
+    terminals_set = []
+    action_traj = []
+    observation_traj = []
+    reward_traj = []
+    terminal_traj = []
 
-concatenate_datasets_()
+    trajectory_count = 0
+    
+    for i in range(len(terminals)):
+        action_traj.append(actions[i])
+        observation_traj.append(observations[i])
+        reward_traj.append(rewards[i])
+        terminal_traj.append(terminals[i])
+        if len(terminal_traj) == 1000:
+            actions_set.append(action_traj)
+            observations_set.append(observation_traj)
+            rewards_set.append(reward_traj)
+            terminals_set.append(terminal_traj)
+            action_traj = []
+            observation_traj = []
+            reward_traj = []
+            terminal_traj = []
+            trajectory_count += 1
+
+    return_dataset = Dataset.from_dict({
+        'actions': actions_set,
+        'observations': observations_set,
+        'rewards': rewards_set,
+        'terminals': terminals_set,
+    })
+    return return_dataset
+
+train_dataset = convert_to_trajactories(train_dataset)
+
+##hugging face 
+h_dataset = load_from_disk("Datasets/halfcheetah-expert-v2")
+h_dataset = h_dataset['train'] 
+print('features ',h_dataset.features)
+#print('Hugging Face Dataset ',type(h_dataset))
+#print('Hugging Face Dataset ',type(h_dataset[0]))
+#print('Hugging Face Dataset ',h_dataset.shape)
+#print('Hugging Face Dataset keys ',h_dataset.column_names)
+#print('Hugging Face Dataset actions shape ',h_dataset.features)
+#print('Hugging Face Dataset actions shape ',h_dataset['actions'][0])
+print('Hugging Face Dataset actions shape ',type(h_dataset[0]))
+print('Hugging Face Dataset actions shape ',type(h_dataset[0]['actions']))
+print('Hugging Face Dataset actions shape ',type(h_dataset[0]['actions'][0]))
+
+#print('Hug ',type(h_dataset[0]))
+
+#train_dataset = Dataset.from_dict(train_dataset)
+#print('Train Dataset ',type(train_dataset))
+#print('Train Dataset ',type(train_dataset[0]))
+#print('Train Dataset ',train_dataset.shape)
+##list keys and shapes
+#print('Train Dataset keys ',train_dataset.column_names)
+#print('Train Dataset keys ',train_dataset.features)
+print('Train Dataset actions shape ',train_dataset.features)
+print('Train Dataset actions shape ',type(train_dataset[0]))
+print('Train Dataset actions shape ',type(train_dataset[0]['actions']))
+print('Train Dataset actions shape ',type(train_dataset[0]['actions'][0]))
+#print('Train Dataset actions shape ',train_dataset[0]['actions'][0])
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--name", type=str, default="DT_Haftcheetah_M_A")
-parser.add_argument("--env", type=str, default="halfcheetah-medium-v2")
+parser.add_argument("--env", type=str, default="halfcheetah_medium-v2")
 parser.add_argument("--outputs", nargs='+', type=str, required=True)
 args = parser.parse_args()
-
-directoy = "Datasets/" + args.env
-train_dataset = load_from_disk(directoy)
-
-if not args.env.startswith("mixed_"):
-    train_dataset = train_dataset['train']
 
 os.environ["WANDB_MODE"] = "offline"
 

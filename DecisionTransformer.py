@@ -73,7 +73,7 @@ class DecisionTransformerGymDataCollator:
             s.append(np.array(feature["observations"][si : si + self.max_len]).reshape(1, -1, self.state_dim))
             a.append(np.array(feature["actions"][si : si + self.max_len]).reshape(1, -1, self.act_dim))
             r.append(np.array(feature["rewards"][si : si + self.max_len]).reshape(1, -1, 1))
-            d.append(np.array(feature["dones"][si : si + self.max_len]).reshape(1, -1))
+            d.append(np.array(feature["terminals"][si : si + self.max_len]).reshape(1, -1))
             timesteps.append(np.arange(si, si + s[-1].shape[1]).reshape(1, -1)) #However long the last sequence is the dataset
 
             timesteps[-1][timesteps[-1] >= self.max_ep_len] = self.max_ep_len - 1  # padding cutoff

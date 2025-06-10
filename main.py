@@ -16,24 +16,16 @@ import gym
 import datasets
 import h5py
 #import mujoco_py
-#import d4rl
+import d4rl
 
-## TODO : Check for validation dataset and add it to the training process
-def download_datasets():
-    for env_name in ["halfcheetah", "hopper","ant"]:
-        for dataset_type in ["expert",]:
-            name = f"{env_name}-{dataset_type}-v2"
-            
-            #delete old datasets
-            if not os.path.exists(f"Datasets/{name}"):
-                #os.system(f"rm -rf Datasets/{name}")
-                #download new datasets
-                dataset = load_dataset("edbeeching/decision_transformer_gym_replay",name)
-                dataset.save_to_disk(f"Datasets/{name}")
 
-#download_datasets()
+parser = argparse.ArgumentParser()
+parser.add_argument("--name", type=str, default="DT_Haftcheetah_A")
+parser.add_argument("--env", type=str, default="halfcheetah_medium-v2")
+parser.add_argument("--outputs", nargs='+', type=str, required=True)
+args = parser.parse_args()
 
-file = "Datasets/halfcheetah_medium-v2.hdf5"
+file = "Datasets/"+ args.env +".hdf5"
 file = h5py.File(file, 'r')
 
 #convert to numpy array 
@@ -91,41 +83,6 @@ def convert_to_trajactories(dataset):
     return return_dataset
 
 train_dataset = convert_to_trajactories(train_dataset)
-
-##hugging face 
-h_dataset = load_from_disk("Datasets/halfcheetah-expert-v2")
-h_dataset = h_dataset['train'] 
-print('features ',h_dataset.features)
-#print('Hugging Face Dataset ',type(h_dataset))
-#print('Hugging Face Dataset ',type(h_dataset[0]))
-#print('Hugging Face Dataset ',h_dataset.shape)
-#print('Hugging Face Dataset keys ',h_dataset.column_names)
-#print('Hugging Face Dataset actions shape ',h_dataset.features)
-#print('Hugging Face Dataset actions shape ',h_dataset['actions'][0])
-print('Hugging Face Dataset actions shape ',type(h_dataset[0]))
-print('Hugging Face Dataset actions shape ',type(h_dataset[0]['actions']))
-print('Hugging Face Dataset actions shape ',type(h_dataset[0]['actions'][0]))
-
-#print('Hug ',type(h_dataset[0]))
-
-#train_dataset = Dataset.from_dict(train_dataset)
-#print('Train Dataset ',type(train_dataset))
-#print('Train Dataset ',type(train_dataset[0]))
-#print('Train Dataset ',train_dataset.shape)
-##list keys and shapes
-#print('Train Dataset keys ',train_dataset.column_names)
-#print('Train Dataset keys ',train_dataset.features)
-print('Train Dataset actions shape ',train_dataset.features)
-print('Train Dataset actions shape ',type(train_dataset[0]))
-print('Train Dataset actions shape ',type(train_dataset[0]['actions']))
-print('Train Dataset actions shape ',type(train_dataset[0]['actions'][0]))
-#print('Train Dataset actions shape ',train_dataset[0]['actions'][0])
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--name", type=str, default="DT_Haftcheetah_M_A")
-parser.add_argument("--env", type=str, default="halfcheetah_medium-v2")
-parser.add_argument("--outputs", nargs='+', type=str, required=True)
-args = parser.parse_args()
 
 os.environ["WANDB_MODE"] = "offline"
 
@@ -189,36 +146,10 @@ else:
     print("training from scratch")
     trainer.train()
 
-wandb.finish()
+#load the dataset
 
-#model.save_pretrained(save_directory)
-#
-#env = gym.make("halfcheetah-medium-v2")
-#max_ep_len = 1000
-#device = "cpu"
-#scale = 2655.0  # normalization for rewards/returns
-#TARGET_RETURN = 10000 / scale  # evaluation is conditioned on a return of 12000, scaled accordingly
-#
-#model = TrainableDT.from_pretrained(save_directory)
-#
-#model = model.to("cpu")
-#
-#state_mean = collator.state_mean.astype(np.float32)
-#state_std = collator.state_std.astype(np.float32)
-#
-#state_dim = env.observation_space.shape[0]
-#act_dim = env.action_space.shape[0]
-#
-#state_mean = torch.from_numpy(state_mean).to(device=device)
-#state_std = torch.from_numpy(state_std).to(device=device)
-#
-#EPISODES = 10
-#
-#return_list, length_list = run_episodes(EPISODES,TARGET_RETURN,device,env, model,act_dim,state_dim,state_mean,state_std,max_ep_len,scale)
-#
-#print(f"Average Return: {np.mean(return_list)}")
-#print(f"Max Return: {np.max(return_list)}")
-#print(f"Min Return: {np.min(return_list)}")
-#print(f"Average Length: {np.mean(length_list)}")
-#
-#print("Hello World")
+
+
+
+
+wandb.finish()
